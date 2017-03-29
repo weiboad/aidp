@@ -3,6 +3,7 @@
 
 #include <adbase/Config.hpp>
 #include "AdbaseConfig.hpp"
+#include "App/Message.hpp"
 
 class App {
 public:
@@ -19,6 +20,7 @@ public:
 
 private:
 	AdbaseConfig* _configure;
+	app::Message* _message = nullptr;
 	mutable std::mutex _mut;
 };
 

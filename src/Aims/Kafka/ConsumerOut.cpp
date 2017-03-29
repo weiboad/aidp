@@ -1,4 +1,5 @@
 #include "ConsumerOut.hpp"
+#include "App/Message.hpp"
 
 namespace aims {
 namespace kafka {
@@ -21,8 +22,11 @@ bool ConsumerOut::pull(const std::string& topicName, int partId, uint64_t offset
 	(void)topicName;
 	(void)partId;
 	(void)offset;
-	LOG_INFO << std::string(data.peek(), data.readableBytes());
-	return true;
+	app::MessageItem item;
+	item.partId = partId;
+	item.offset = offset;
+	item.message = data;
+	return _context->message->push(item);
 }
 
 // }}}

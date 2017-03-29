@@ -12,7 +12,7 @@ public:
 	~Timer();
 	void init();
 	adbase::Timer* getTimer();
-	void default(void* args);
+	void noop(void* args);
 
 private:
 	/// 传输上下文指针

@@ -67,10 +67,20 @@ typedef struct adbaseConfig {
 	std::string mcServerName;
 	int mcThreadNum;
 	DECLARE_KAFKA_CONSUMER_CONFIG(Out);
-	DECLARE_TIMER_CONFIG(Default);
+	DECLARE_TIMER_CONFIG(Noop);
+
+	bool luaDebug;
+	std::string luaScriptPath;
+
+	std::string consumerScriptName;
+	int consumerBatchNumber;
+	std::string messageSwp;
 } AdbaseConfig;
 
 class App;
+namespace app {
+	class Message;
+}
 typedef struct adserverContext {
 	AdbaseConfig* config;
 	adbase::EventBasePtr mainEventBase;	
@@ -83,6 +93,7 @@ typedef struct aimsContext {
 	AdbaseConfig* config;
 	App* app;
 	// 消息队列交互上下文
+	app::Message* message;
 } AimsContext;
 typedef struct timerContext {
 	AdbaseConfig* config;

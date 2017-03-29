@@ -48,13 +48,13 @@ void Timer::init() {
 	//ADD_EVERY_TIMER(1 * 1000, one);
 	/// 一段时间后仅执行一次
 	//ADD_AFTER_TIMER(1 * 1000, one);
-	ADD_EVERY_TIMER(_configure->intervalDefault, default);
+	ADD_EVERY_TIMER(_configure->intervalNoop, noop);
 }
 
 // }}}
-// {{{ void Timer::default()
+// {{{ void Timer::noop()
 
-void Timer::default(void*) {
+void Timer::noop(void*) {
 	LOG_INFO << "Timer " << "default";
 }
 

@@ -1,5 +1,6 @@
 #include <adbase/Utility.hpp>
 #include <adbase/Logging.hpp>
+#include <adbase/Lua.hpp>
 #include "App.hpp"
 
 //{{{ macros
@@ -42,18 +43,42 @@ App::~App() {
 // {{{ void App::run()
 
 void App::run() {
+	typedef std::function<std::list<std::pair<std::string, std::string>>()> GetMessageFn;
+	adbase::lua::Engine::getInstance().init();
+	adbase::lua::Engine::getInstance().clearLoaded();
+	adbase::lua::Engine::getInstance().addSearchPath(_configure->luaScriptPath, true);
+
+	lua_State* L = adbase::lua::Engine::getInstance().getLuaState();
+	//adbase::lua::BindingManager::getInstance().init(L);
+
+	_message = new app::Message(_configure);
+	_message->loadMessage();
+	_message->start();
+
+	adbase::lua::BindingClass<app::Message> clazz("message", "aidp", L);
+	GetMessageFn getMessageFn = std::bind(&app::Message::getMessage, _message);
+	clazz.addMethod("get", getMessageFn);
+	clazz.addConst("xxx", "3232");
 }
 
 // }}}
 // {{{ void App::reload()
 
 void App::reload() {
+	// 重新加载 message
+	_message->reload();
 }
 
 // }}}
 // {{{ void App::stop()
 
 void App::stop() {
+	if (_message != nullptr) {
+		_message->stop();
+		//_message->saveMessage();
+		delete _message;
+		_message = nullptr;
+	}
 }
 
 // }}}
@@ -68,6 +93,7 @@ void App::setAdServerContext(AdServerContext* context) {
 
 void App::setAimsContext(AimsContext* context) {
 	context->app = this;
+	context->message = _message;
 }
 
 // }}}
@@ -82,8 +108,15 @@ void App::setTimerContext(TimerContext* context) {
 
 void App::loadConfig(adbase::IniConfig& config) {
 	LOAD_KAFKA_CONSUMER_CONFIG(Out, out);
+
+    _configure->luaDebug = config.getOptionBool("lua", "debug");
+	LOG_INFO << "LUADEBUG:" << _configure->luaDebug;
+    _configure->luaScriptPath = config.getOption("lua", "scriptPath");
+    _configure->consumerScriptName  = config.getOption("consumer", "scriptName");
+    _configure->consumerBatchNumber = config.getOptionUint32("consumer", "batchNumber");
+    _configure->messageSwp = config.getOption("consumer", "messageSwp");
 	
-	LOAD_TIMER_CONFIG(Default);
+	LOAD_TIMER_CONFIG(Noop);
 }
 
 //}}}
