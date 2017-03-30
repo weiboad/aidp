@@ -3,6 +3,7 @@
 
 #include <adbase/Utility.hpp>
 #include <adbase/Logging.hpp>
+#include <adbase/Lua.hpp>
 #include <adbase/Metrics.hpp>
 #include <unordered_map>
 #include <mutex>
@@ -26,7 +27,7 @@ typedef std::list<std::pair<std::string, std::string>> MessageToLua;
 
 class Message {
 public:
-	Message(AdbaseConfig* configure);
+	Message(AdbaseConfig* configure, adbase::lua::Engine* engine);
 	~Message();
 	void start();
 	void stop();
@@ -47,6 +48,7 @@ private:
 	MessageQueue _queue;
 	mutable std::mutex _mut;
 	std::unordered_map<std::string, MessageItem> _luaMessages;
+	adbase::lua::Engine* _engine;
 
 	void serialize(adbase::Buffer& buffer, MessageItem& item);
 	void callMessage();

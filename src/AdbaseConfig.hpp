@@ -4,6 +4,7 @@
 #include <string>
 #include <adbase/Net.hpp>
 #include <adbase/Metrics.hpp>
+#include <adbase/Lua.hpp>
 
 // {{{ macros
 
@@ -56,6 +57,7 @@ typedef struct adbaseConfig {
 	std::string httpServerName;
 	std::string httpAccessLogDir;
 	int httpAccesslogRollSize;
+	std::string httpScriptName;
 
 	std::string headHost;
 	int headPort;

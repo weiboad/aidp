@@ -103,21 +103,22 @@ void AdServer::initHttp() {
 // {{{ std::string AdServer::httpFallback()
 
 std::string AdServer::httpFallback(const std::string& url) {
-	std::string result  = "/";
-	std::string trimUrl = adbase::trim(url, "/");
-	if (_httpManager != nullptr) {
-		std::unordered_map<std::string, std::string> rewrites = _httpManager->rewrite();
-		if (rewrites.find(trimUrl) != rewrites.end()) {
-			return rewrites[trimUrl];	
-		}
-	}
-	if (trimUrl.empty()) {
-		return result + _configure->httpDefaultController + "/" + _configure->httpDefaultAction; 
-	} else if (trimUrl.find("/") == std::string::npos) {
-		return result + trimUrl + "/" + _configure->httpDefaultAction; 
-	} else {
-		return url;	
-	}
+	return "/index/index";
+	//std::string result  = "/";
+	//std::string trimUrl = adbase::trim(url, "/");
+	//if (_httpManager != nullptr) {
+	//	std::unordered_map<std::string, std::string> rewrites = _httpManager->rewrite();
+	//	if (rewrites.find(trimUrl) != rewrites.end()) {
+	//		return rewrites[trimUrl];	
+	//	}
+	//}
+	//if (trimUrl.empty()) {
+	//	return result + _configure->httpDefaultController + "/" + _configure->httpDefaultAction; 
+	//} else if (trimUrl.find("/") == std::string::npos) {
+	//	return result + trimUrl + "/" + _configure->httpDefaultAction; 
+	//} else {
+	//	return url;	
+	//}
 }
 
 // }}}

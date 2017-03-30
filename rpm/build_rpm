@@ -13,7 +13,7 @@ PATH_DEV_SWAN=/usr/local/adinf/aidp
 # build rpm 包的目录
 BUILD_ROOT="/usr/home/zhongxiu/rpmbuild"
 SWANSOFT_NAME="aidp"
-SWANSOFT_VERSION=""
+SWANSOFT_VERSION="0.1.0"
 BUILD_TMP=/tmp
 BUILD_BALL=$BUILD_TMP/$SWANSOFT_NAME-$SWANSOFT_VERSION
 

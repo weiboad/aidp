@@ -83,7 +83,6 @@ void Aims::run() {
 	init();
 
 	START_KAFKA_CONSUMER(Out);
-	
 }
 
 // }}}

@@ -2,6 +2,7 @@
 #define AIDP_APP_HPP_
 
 #include <adbase/Config.hpp>
+#include <adbase/Lua.hpp>
 #include "AdbaseConfig.hpp"
 #include "App/Message.hpp"
 
@@ -21,7 +22,9 @@ public:
 private:
 	AdbaseConfig* _configure;
 	app::Message* _message = nullptr;
+	adbase::lua::Engine* _messageEngine = nullptr;
 	mutable std::mutex _mut;
+	void bindLuaMessage();
 };
 
 #endif

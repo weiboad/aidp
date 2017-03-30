@@ -23,6 +23,7 @@
 #endif
 
 // }}}
+
 class Http {
 public:
 	Http(AdServerContext* context, adbase::http::Server* http);

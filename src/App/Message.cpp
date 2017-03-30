@@ -5,8 +5,9 @@
 namespace app {
 // {{{ Message::Message()
 
-Message::Message(AdbaseConfig* configure):
-	_configure(configure) {
+Message::Message(AdbaseConfig* configure, adbase::lua::Engine* engine):
+	_configure(configure),
+	_engine(engine)	{
 	adbase::metrics::Metrics::buildGauges("message", "queue.size", 1, [this](){
 		return _queue.getSize();
 	});
@@ -33,6 +34,8 @@ void Message::start() {
 void Message::stop() {
 	MessageItem newItem;
 	newItem.mask = 0x01;
+	newItem.partId = 0;
+	newItem.offset = 0;
 	_queue.push(newItem);
 }
 
@@ -164,7 +167,7 @@ void Message::serialize(adbase::Buffer& buffer, MessageItem& item) {
 
 void Message::callMessage() {
 	std::lock_guard<std::mutex> lk(_mut);
-	bool isCall = adbase::lua::Engine::getInstance().runFile(_configure->consumerScriptName.c_str());
+	bool isCall = _engine->runFile(_configure->consumerScriptName.c_str());
 	if (isCall) {
 		_luaMessages.clear();
 	}
