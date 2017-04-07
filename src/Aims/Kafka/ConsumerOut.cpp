@@ -19,13 +19,11 @@ ConsumerOut::~ConsumerOut() {
 // {{{ void ConsumerOut::pull()
 
 bool ConsumerOut::pull(const std::string& topicName, int partId, uint64_t offset, const adbase::Buffer& data) {
-	(void)topicName;
-	(void)partId;
-	(void)offset;
 	app::MessageItem item;
 	item.partId = partId;
 	item.offset = offset;
 	item.message = data;
+	item.topicName = topicName;
 	return _context->message->push(item);
 }
 

@@ -19,11 +19,12 @@ typedef struct MessageItem {
     int partId;
 	int mask; // 0x00 normal, 0x01 stop
     uint64_t offset;
+	std::string topicName;
     adbase::Buffer message;
 } MessageItem;
 
 typedef adbase::Queue<MessageItem> MessageQueue;
-typedef std::list<std::pair<std::string, std::string>> MessageToLua;
+typedef std::list<std::list<std::string>> MessageToLua;
 
 
 class Message {

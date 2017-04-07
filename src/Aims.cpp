@@ -2,36 +2,7 @@
 
 // {{{ macros
 
-#define INIT_KAFKA_CONSUMER(name) do { \
-	_kafkaConsumerCallback##name = new aims::kafka::Consumer##name(_context);\
-	_kafkaConsumer##name = new adbase::kafka::Consumer(_configure->topicNameConsumer##name,\
-							_configure->groupId##name, _configure->brokerListConsumer##name);\
-	_kafkaConsumer##name->setMessageHandler(std::bind(&aims::kafka::Consumer##name::pull,\
-													 _kafkaConsumerCallback##name,\
-													 std::placeholders::_1, std::placeholders::_2,\
-													 std::placeholders::_3, std::placeholders::_4));\
-	_kafkaConsumer##name->setStatCallback(std::bind(&aims::kafka::Consumer##name::stat,\
-													_kafkaConsumerCallback##name,\
-												    std::placeholders::_1, std::placeholders::_2));\
-	_kafkaConsumer##name->setKafkaDebug(_configure->kafkaDebug##name);\
-	_kafkaConsumer##name->setOffsetStorePath(_configure->offsetPath##name);\
-	_kafkaConsumer##name->setKafkaStatInterval(_configure->statInterval##name);\
-    if (_configure->isNewConsumer##name) {\
-        _kafkaConsumer##name->setIsNewConsumer(true);\
-        _kafkaConsumer##name->setOffsetStoreMethod("broker");\
-    }\
-} while(0)
-#define START_KAFKA_CONSUMER(name) do {\
-	_kafkaConsumer##name->start();\
-} while(0)
 #define STOP_KAFKA_CONSUMER(name) do {\
-	if (_kafkaConsumer##name != nullptr) {\
-		_kafkaConsumer##name->stop();\
-	}\
-	if (_kafkaConsumerCallback##name != nullptr) {\
-		delete _kafkaConsumerCallback##name;\
-		_kafkaConsumerCallback##name = nullptr;\
-	}\
 } while(0)
 
 #define INIT_KAFKA_PRODUCER(name) do {\
@@ -82,7 +53,9 @@ void Aims::run() {
 	// 初始化 server
 	init();
 
-	START_KAFKA_CONSUMER(Out);
+	for(auto &t : _kafkas) {
+		t.second->start();	
+	}
 }
 
 // }}}
@@ -96,14 +69,42 @@ void Aims::init() {
 // {{{ void Aims::stop()
 
 void Aims::stop() {
-	STOP_KAFKA_CONSUMER(Out);
+	for (auto &t : _kafkas) {
+		if (t.second != nullptr) {
+			t.second->stop();
+		}
+	}
+	if (_kafkaConsumerCallbackOut != nullptr) {
+		delete _kafkaConsumerCallbackOut;
+		_kafkaConsumerCallbackOut = nullptr;
+	}
 }
 
 // }}}
 // {{{ void Aims::initKafkaConsumer()
 
 void Aims::initKafkaConsumer() {
-	INIT_KAFKA_CONSUMER(Out);
+	_kafkaConsumerCallbackOut = new aims::kafka::ConsumerOut(_context);
+	std::vector<std::string> topicNames = adbase::explode(_configure->topicNameConsumerOut, ',', true);
+	for(auto &t : topicNames) {
+		adbase::kafka::Consumer* consumer = new adbase::kafka::Consumer(t, _configure->groupIdOut, 
+											_configure->brokerListConsumerOut);	
+		consumer->setMessageHandler(std::bind(&aims::kafka::ConsumerOut::pull,
+												_kafkaConsumerCallbackOut,
+												std::placeholders::_1, std::placeholders::_2,
+												std::placeholders::_3, std::placeholders::_4));
+		consumer->setStatCallback(std::bind(&aims::kafka::ConsumerOut::stat,
+											_kafkaConsumerCallbackOut,
+											std::placeholders::_1, std::placeholders::_2));
+		consumer->setKafkaDebug(_configure->kafkaDebugOut);
+		consumer->setOffsetStorePath(_configure->offsetPathOut);
+		consumer->setKafkaStatInterval(_configure->statIntervalOut);
+		if (_configure->isNewConsumerOut) {
+			consumer->setIsNewConsumer(true);
+			consumer->setOffsetStoreMethod("broker");
+		}
+		_kafkas[t] = consumer;
+	}
 }
 
 // }}}

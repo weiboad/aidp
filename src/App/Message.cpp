@@ -134,9 +134,12 @@ void Message::callMessage() {
 MessageToLua Message::getMessage() {
 	MessageToLua ret;
 	for	(auto &t : messageLuaMessages) {
+		std::list<std::string> item;
 		std::string id = std::to_string(t.second.partId) + "_" + std::to_string(t.second.offset);
 		std::string message = t.second.message.retrieveAllAsString();
-		std::pair<std::string, std::string> item(id, message);
+		item.push_back(id);
+		item.push_back(t.second.topicName);
+		item.push_back(message);
 		ret.push_back(item);
 	}
 	return ret;
