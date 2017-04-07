@@ -5,6 +5,7 @@
 #include <adbase/Lua.hpp>
 #include "AdbaseConfig.hpp"
 #include "App/Message.hpp"
+#include "App/Storage.hpp"
 
 class App {
 public:
@@ -22,7 +23,7 @@ public:
 private:
 	AdbaseConfig* _configure;
 	app::Message* _message = nullptr;
-	adbase::lua::Engine* _messageEngine = nullptr;
+	std::shared_ptr<app::Storage> _storage;
 	mutable std::mutex _mut;
 	void bindLuaMessage();
 };

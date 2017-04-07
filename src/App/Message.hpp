@@ -13,6 +13,7 @@
 #include "AdbaseConfig.hpp"
 
 namespace app {
+class Storage;
 // message queue
 typedef struct MessageItem {
     int partId;
@@ -27,14 +28,12 @@ typedef std::list<std::pair<std::string, std::string>> MessageToLua;
 
 class Message {
 public:
-	Message(AdbaseConfig* configure, adbase::lua::Engine* engine);
+	Message(AdbaseConfig* configure, Storage* storage);
 	~Message();
 	void start();
 	void stop();
 	void reload();
-	void call(void *data);
-	void saveMessage();
-	void loadMessage();
+	void call(int i);
 	MessageToLua getMessage();
 	bool push(MessageItem& item);
     static void deleteThread(std::thread *t);
@@ -45,13 +44,11 @@ private:
     ThreadPool Threads;
 
 	AdbaseConfig *_configure;
-	MessageQueue _queue;
-	mutable std::mutex _mut;
-	std::unordered_map<std::string, MessageItem> _luaMessages;
-	adbase::lua::Engine* _engine;
+	Storage* _storage;
+	std::unordered_map<int, MessageQueue*> _queues;
 
-	void serialize(adbase::Buffer& buffer, MessageItem& item);
 	void callMessage();
+	void initLua();
 	void addLuaMessage(MessageItem& item);
 	const std::string convertKey(MessageItem& item);
 

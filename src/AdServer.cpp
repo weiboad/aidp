@@ -102,7 +102,7 @@ void AdServer::initHttp() {
 // }}}
 // {{{ std::string AdServer::httpFallback()
 
-std::string AdServer::httpFallback(const std::string& url) {
+std::string AdServer::httpFallback(const std::string&) {
 	return "/index/index";
 	//std::string result  = "/";
 	//std::string trimUrl = adbase::trim(url, "/");

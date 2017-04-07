@@ -33,6 +33,7 @@ SET(AIDP_SRC aidp.cpp
 	Aims/Kafka/ConsumerOut.cpp
 	Timer.cpp
 	App/Message.cpp
+	App/Storage.cpp
 )
 ADD_EXECUTABLE(aidp ${AIDP_SRC})
 TARGET_LINK_LIBRARIES(aidp libadbase.a 

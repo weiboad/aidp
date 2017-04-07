@@ -43,15 +43,10 @@ App::~App() {
 // {{{ void App::run()
 
 void App::run() {
-	_messageEngine = new adbase::lua::Engine();
-	_messageEngine->init();
-	_messageEngine->clearLoaded();
-	_messageEngine->addSearchPath(_configure->luaScriptPath, true);
+	_storage = std::shared_ptr<app::Storage>(new app::Storage(_configure));
+	_storage->init();
 
-	_message = new app::Message(_configure, _messageEngine);
-	// 绑定 class
-	bindLuaMessage();
-	_message->loadMessage();
+	_message = new app::Message(_configure, _storage.get());
 	_message->start();
 }
 
@@ -72,10 +67,6 @@ void App::stop() {
 		delete _message;
 		_message = nullptr;
 	}
-	if (_messageEngine != nullptr) {
-		delete _messageEngine;
-		_messageEngine = nullptr;
-	}
 }
 
 // }}}
@@ -83,6 +74,7 @@ void App::stop() {
 
 void App::setAdServerContext(AdServerContext* context) {
 	context->app = this;
+	context->storage = _storage.get();
 }
 
 // }}}
@@ -91,6 +83,7 @@ void App::setAdServerContext(AdServerContext* context) {
 void App::setAimsContext(AimsContext* context) {
 	context->app = this;
 	context->message = _message;
+	context->storage = _storage.get();
 }
 
 // }}}
@@ -98,6 +91,7 @@ void App::setAimsContext(AimsContext* context) {
 
 void App::setTimerContext(TimerContext* context) {
 	context->app = this;
+	context->storage = _storage.get();
 }
 
 // }}}
@@ -110,20 +104,12 @@ void App::loadConfig(adbase::IniConfig& config) {
     _configure->luaScriptPath = config.getOption("lua", "scriptPath");
     _configure->consumerScriptName  = config.getOption("consumer", "scriptName");
     _configure->consumerBatchNumber = config.getOptionUint32("consumer", "batchNumber");
+    _configure->consumerThreadNumber = config.getOptionUint32("consumer", "threadNumber");
+    _configure->consumerMaxNumber = config.getOptionUint32("consumer", "maxNumber");
     _configure->messageSwp = config.getOption("consumer", "messageSwp");
     _configure->httpScriptName  = config.getOption("http", "scriptName");
 	
-	LOAD_TIMER_CONFIG(Noop);
-}
-
-//}}}
-//{{{ void App::bindLuaMessage()
-
-void App::bindLuaMessage() {
-	adbase::lua::BindingClass<app::Message> clazz("message", "aidp", _messageEngine->getLuaState());
-	typedef std::function<std::list<std::pair<std::string, std::string>>()> GetMessageFn;
-	GetMessageFn getMessageFn = std::bind(&app::Message::getMessage, _message);
-	clazz.addMethod("get", getMessageFn);
+	LOAD_TIMER_CONFIG(ClearStorage);
 }
 
 //}}}

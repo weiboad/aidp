@@ -1,4 +1,5 @@
 #include "Index.hpp"
+#include "App/Storage.hpp"
 #include <adbase/Logging.hpp>
 
 namespace adserver {
@@ -40,8 +41,8 @@ void Index::index(adbase::http::Request* request, adbase::http::Response* respon
 	tmpResponse = sharedResponse;
 	responseHeader(response);
 	response->setContent("");
-	//httpLuaEngine->runFile(_context->config->httpScriptName.c_str());
-	responseJson(response, "{\"msg\": \"hello xxxx adinf\"}", 0, "");
+	httpLuaEngine->runFile(_context->config->httpScriptName.c_str());
+	//responseJson(response, "{\"msg\": \"hello xxxx adinf\"}", 0, "");
 	sharedResponse.reset();
 	sharedRequest.reset();
 	response->sendReply();
@@ -67,17 +68,38 @@ std::weak_ptr<adbase::http::Response>& Index::getResponse() {
 
 void Index::bindLuaClass(adbase::lua::Engine* engine) {
 	adbase::lua::BindingClass<adbase::http::Request> request("request", "aidp.http", engine->getLuaState());
+	adbase::lua::BindingNamespace requestCs = request.getOwnerNamespace();
 	typedef std::function<std::weak_ptr<adbase::http::Request>()> GetRequest;
 	GetRequest requestFn = std::bind(&adserver::http::Index::getRequest, this);
-	request.addMethod("request", requestFn);
-	request.addMethod("getUri", &adbase::http::Request::getUri);
+	requestCs.addMethod("request", requestFn);
+
+	request.addMethod("get_uri", &adbase::http::Request::getUri);
+	request.addMethod("get_remote_address", &adbase::http::Request::getRemoteAddress);
+	request.addMethod("get_post_data", &adbase::http::Request::getPostData);
+	request.addMethod("get_post", &adbase::http::Request::getPost);
+	request.addMethod("get_query", &adbase::http::Request::getQuery);
+	request.addMethod("get_header", &adbase::http::Request::getHeader);
+	request.addMethod("get_location", &adbase::http::Request::getLocation);
+	request.addMethod("get_method", &adbase::http::Request::getMethod);
+	request.addConst("METHOD_GET", adbase::http::Request::httpMethod::METHOD_GET);
+	request.addConst("METHOD_POST", adbase::http::Request::httpMethod::METHOD_POST);
+	request.addConst("METHOD_OTHER", adbase::http::Request::httpMethod::METHOD_OTHER);
 
 	// bind response
 	adbase::lua::BindingClass<adbase::http::Response> response("response", "aidp.http", engine->getLuaState());
+	adbase::lua::BindingNamespace responseCs = response.getOwnerNamespace();
 	typedef std::function<std::weak_ptr<adbase::http::Response>()> GetResponse;
 	GetResponse responseFn = std::bind(&adserver::http::Index::getResponse, this);
-	response.addMethod("response", responseFn); // 构造函数
-	response.addMethod("setContent", &adbase::http::Response::setContent);
+	responseCs.addMethod("response", responseFn); // 构造函数
+
+	response.addMethod("set_header", &adbase::http::Response::setHeader);
+	response.addMethod("add_header", &adbase::http::Response::addHeader);
+	response.addMethod("set_content", &adbase::http::Response::setContent);
+	response.addMethod("append_content", &adbase::http::Response::appendContent);
+	response.addMethod("send_reply", &adbase::http::Response::sendReply);
+	response.addMethod("get_code", &adbase::http::Response::getCode);
+	response.addMethod("set_body_size", &adbase::http::Response::getBodySize);
+	_context->storage->bindClass(engine);
 }
 
 // }}}

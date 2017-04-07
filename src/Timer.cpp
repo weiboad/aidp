@@ -48,14 +48,16 @@ void Timer::init() {
 	//ADD_EVERY_TIMER(1 * 1000, one);
 	/// 一段时间后仅执行一次
 	//ADD_AFTER_TIMER(1 * 1000, one);
-	ADD_EVERY_TIMER(_configure->intervalNoop, noop);
+	ADD_EVERY_TIMER(_configure->intervalClearStorage, clearStorage);
 }
 
 // }}}
-// {{{ void Timer::noop()
+// {{{ void Timer::clearStorage()
 
-void Timer::noop(void*) {
-	LOG_INFO << "Timer " << "default";
+void Timer::clearStorage(void*) {
+	if (_context->storage != nullptr) {
+		_context->storage->clear();
+	}
 }
 
 // }}}

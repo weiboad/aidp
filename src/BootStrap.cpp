@@ -70,13 +70,13 @@ void BootStrap::run() {
 		_adServer->run();
 	}
 	
-	//AimsContext aimsContext;
-	//aimsContext.config = _configure;
-	//_app->setAimsContext(&aimsContext);
-	//_aims = new Aims(&aimsContext);
-	//if (_aims != nullptr) {
-	//	_aims->run();
-	//}
+	AimsContext aimsContext;
+	aimsContext.config = _configure;
+	_app->setAimsContext(&aimsContext);
+	_aims = new Aims(&aimsContext);
+	if (_aims != nullptr) {
+		_aims->run();
+	}
 	
 	_loop->start();
 }
