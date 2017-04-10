@@ -13,6 +13,8 @@ AIDP 处理调用流程：
 
 #### RPM 安装
 
+RPM 目前支持 centos7.x 版本，其他版本陆续会上传, 有其他系统版本的需求可以提 issue
+
 #### 编译安装
 
 1. 安装 adbase, 参见：
@@ -28,6 +30,57 @@ AIDP 处理调用流程：
 - make install
 ```
 
+#### Example
+
+例如使用 aidp 将 kafka 集群中 topic test 落地到本地，并且统计消息的个数，最终消息个数通过 http api 接口可以获取
+
+在安装好的 aidp 中修改配置 `conf/system.ini` ，配置 kafka 消费调用的 lua 脚本，通过修改 [consumer] -> scriptName 配置配置上 lua 脚本即可, 处理脚本如下：
+
+```
+--
+--
+-- 该脚本实现将 kafka 中的数据落地到文件中，并且统计落地消息数
+--
+--
+local obj = aidp.message.get()
+local filename = os.date('%Y-%m-%d-%H') .. '.log'
+local files = {};
+-- 实例化存储
+local storage = aidp.storage()
+for k,v in pairs(obj) do
+    if #v == 3 then
+        if files[v[2]] == nil then
+            files[v[2]] = io.open(v[2]..filename, 'a+');
+            files[v[2]]:setvbuf('full')
+        end
+        files[v[2]]:write(v[3]..'\n')
+		-- 存储计数
+        storage:incr(v[2] .. ':message_size', 1)
+    end
+end
+for k,v in pairs(files) do
+    v:flush()
+    v:close()
+end
+```
+
+修改配置文件 [http]->scriptName 设置 http 接口调用的 lua 脚本，lua脚本处理内容如下：
+
+```
+-- 获取某个 topic 当前消费的数量
+local request = aidp.http.request();
+local topic_name = request:get_query('t')
+local response = aidp.http.response();
+local storage = aidp.storage()
+response:set_content(topic_name .. ':message_size ' .. storage:get(topic_name .. ':message_size'));
+```
+
+启动 aidp
+
+```
+cd /usr/local/adinf/aidp/bin
+./aidp -c ../conf/system.ini
+```
 ### Message Consumer 
 
 消息消费模块负责从 Kafka 中获取消息，在获取到消息后会调用 Lua 消费脚本，Lua 脚本中可以调用 `aidp.message.get()` 这个函数获取消息，做相应的处理, 例如：
