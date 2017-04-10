@@ -1,4 +1,3 @@
-print("sssssas")
 local obj = aidp.message.get()
 local filename = 'test' .. os.date('%Y-%m-%d-%H') .. '.log'
 local file = io.open(filename, 'a+')
