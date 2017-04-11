@@ -1,54 +1,54 @@
 # AIDP (Data Process)
 
-AIDP 负责消息队列消费等一系列逻辑，在获取到消息后具体的处理交由 Lua 脚本处理，开发者可以定制消费队列的处理，并且本框架提供了 Http Server 服务，可以使用 Lua 脚本定制 Http API 接口，再消费消息逻辑和 Http Server 间本框架提供了简单的 Key-Val 存储结构做数据共享。如图是该数据处理框架的结构：
+[中文文档](README_CN.md)
 
-![结构图](docs/images/aidp_struct.png)
+AIDP is responsible for a series of messages such as message queue consumption. After getting the message, the specific processing is handled by Lua script. The developer can customize the processing of the consumption queue, and the framework provides http server service. You can use the Lua script to customize the http API Interface, and then consumption message logic and http server between the framework provides a simple Key-Val storage structure for data sharing. The figure is the structure of the AIDP data processing framework:
 
-AIDP 处理调用流程：
+![structure](docs/images/aidp_struct.png)
 
-![数据处理流程](docs/images/aidp_struct_pro.png)
+AIDP invoke flow：
 
-### Why? 
+![data process flow](docs/images/aidp_struct_pro.png)
 
-对于消息队列的大部分应用场景是后端有一个消费模块进行数据处理，将最终的数据存储到一个地方，最终通过 RPC 接口供使用方使用。有的应用场景业务逻辑可能特别的简单，但是大部分语言对于 Kafka 的消费实现都很复杂（Kafka 消费逻辑决定）使得在开发具体业务逻辑的时候增加开发成本，AIDP 通过 C++ 将这一通用开发模型进行抽象封装，为了增加定制性通过嵌入 Lua 脚本语言来完成定制化部分的逻辑。AIDP 是在开发难度、成本与灵活性之间权衡的折中方案。可以满足大量的数据处理需求
+### Why use lua script customize ? 
+
+Most of the application scenarios for the message queue are back-end with a consumer module for data processing, the final data stored in a DB, and finally through the RPC interface for the user use. Some application scenarios data process logic may be particularly simple, but most of the language is very complicated for Kafka's consumption (Kafka consumption logic) When the specific data process logic to increase the development costs, AIDP through C++ this general development model abstract package, in order to increase the custom through the embedded Lua scripting language. To complete the custom part of the logic. AIDP is a compromise between development difficulty, cost and flexibility. Can meet a large number of data processing demand 
 
 ### Quick Start
 
-#### RPM 安装
+#### RPM install
 
 RPM 目前支持 centos7.x 版本，其他版本陆续会上传, 有其他系统版本的需求可以提 issue
 
-#### 编译安装
+#### Complie install
 
-1. 安装 adbase, 参见：https://nmred.gitbooks.io/adbase/content/zh/basic/install.html
+First, install AIDP depend package adbase, Installation method refer : https://nmred.gitbooks.io/adbase/content/en/basic/install.html
 
-2. 安装 aidp
+Second, complie and install aidp
 
 ```
-- git clone git@github.com:weiboad/aidp.git
-- cd aidp
-- ./cmake.sh
-- cd build
-- make
-- make install
+git clone git@github.com:weiboad/aidp.git
+cd aidp
+./cmake.sh
+cd build
+make
+make install
 ```
 
 #### Example
 
-例如使用 aidp 将 kafka 集群中 topic test 落地到本地，并且统计消息的个数，最终消息个数通过 http api 接口可以获取
-
-在安装好的 aidp 中修改配置 `conf/system.ini` ，配置 kafka 消费调用的 lua 脚本，通过修改 [consumer] -> scriptName 配置配置上 lua 脚本即可, 处理脚本如下：
+For example, using aidp get kafka cluster topic `test` data write to the local disk, and statistics the number of messages, the final number of messages through the http api interface can be obtained. In the installed aidp directory modify the configuration `conf/system.ini`, configure kafka consumption calls lua script path, by modifying `consumer` section `scriptName` field. Set up on the lua script can be configured to handle the script as follows:
 
 ```lua
 --
 --
--- 该脚本实现将 kafka 中的数据落地到文件中，并且统计落地消息数
+-- This sctipt process message write to the local disk and statistics the number of messages store in local storage
 --
 --
 local obj = aidp.message.get()
 local filename = os.date('%Y-%m-%d-%H') .. '.log'
 local files = {};
--- 实例化存储
+-- get storage object
 local storage = aidp.storage()
 for k,v in pairs(obj) do
     if #v == 3 then
@@ -57,7 +57,7 @@ for k,v in pairs(obj) do
             files[v[2]]:setvbuf('full')
         end
         files[v[2]]:write(v[3]..'\n')
-		-- 存储计数
+	-- store number of message  in local storage
         storage:incr(v[2] .. ':message_size', 1)
     end
 end
@@ -67,10 +67,10 @@ for k,v in pairs(files) do
 end
 ```
 
-修改配置文件 [http]->scriptName 设置 http 接口调用的 lua 脚本，lua脚本处理内容如下：
+Modify the configuration file `http` section `scriptName` field set http interface call lua script path, lua script processing logic as follows:
 
 ```lua
--- 获取某个 topic 当前消费的数量
+-- get a topic number of has process message
 local request = aidp.http.request();
 local topic_name = request:get_query('t')
 local response = aidp.http.response();
@@ -78,7 +78,7 @@ local storage = aidp.storage()
 response:set_content(topic_name .. ':message_size ' .. storage:get(topic_name .. ':message_size'));
 ```
 
-启动 aidp
+Start aidp service:
 
 ```
 cd /usr/local/adinf/aidp/bin
@@ -87,20 +87,19 @@ cd /usr/local/adinf/aidp/bin
 
 ### Message Consumer 
 
-消息消费模块负责从 Kafka 中获取消息，在获取到消息后会调用 Lua 消费脚本，Lua 脚本中可以调用 `aidp.message.get()` 这个函数获取消息，做相应的处理, 例如：
+The message consumption module is responsible for getting the message from Kafka and invoking the Lua consumption script after getting the message. The Lua script can invoke the `aidp.message.get()` function to get the message
 
 #### aidp.message.get
 
-Lua 脚本获取 kafka 消息的接口
+Get kafka message
 
-参数：无
+Params：None
 
-作用范围：仅 Message Consumer 脚本有效
+Scope：Only the message consumption script valid
 
-返回：
+Return：Data structure is follow:
 
 ```lua
--- 返回多条消息：
 -- {
 -- 	{
 -- 		id, 
@@ -121,9 +120,9 @@ Lua 脚本获取 kafka 消息的接口
 ```
 
 ```lua
--- 将 Kafka 消息写入到本地文件中
-
--- 获取消息
+--This sctipt process message write to the local disk
+--
+-- get message
 local obj = aidp.message.get()
 
 local filename = os.date('%Y-%m-%d-%H') .. '.log'
@@ -148,35 +147,33 @@ end
 
 ### Http Server 
 
-提供 HTTP 接口 Lua 定制开发，对于 Lua 端提供 Request、Response 对象，通过 Request 获取请求数据，并且通过 Lua 脚本处理将最终的响应数据通过 Response 接口定制，Request 和 Response 相关的接口仅仅在 Http Server 处理脚本上有效，对于 Message consumer 处理脚本无效
+Provide HTTP interface Lua custom development, for the Lua side to provide Request, Response object, through the Request to obtain the request data, and through the Lua script. The final response data will be customized through the Response interface, Request and Response object methods only in the Http Server processing script is valid for the Message consumer processing script is invalid
 
 #### Request
 
-| 方法 | 类型 | 描述 |
+| Method | Method Type | Description |
 |-----|-----|-----|
-| aidp.http.request() | 静态构造函数 | 构造 request 对象 |
-| request:get_uri() | 对象方法 | 获取请求 URI |
-| request:get_remote_address() | 对象方法 | 获取请求远程的 IP 地址 |
-| request:get_post_data() | 对象方法 | 获取 POST 请求的原始数据 |
-| request:get_post([key]) | 对象方法 | 获取 POST Form-Data 类型的数据 | 
-| request:get_query(key) | 对象方法 | 获取 GET 数据 |
-| request:get_header(key) | 对象方法 | 获取 Header  数据 |
-| request:get_location() | 对象方法 | 获取 Location  数据 |
-| request:get_method() | 对象方法 | 获取请求类型, 返回枚举 METHOD_GET、METHOD_POST、METHOD_OTHER |
+| aidp.http.request() | Static | Construct request object |
+| request:get_uri() | Object Method | Get request URI |
+| request:get_remote_address() | Object Method | Get remote address |
+| request:get_post_data() | Object Method | Get origin post data |
+| request:get_post([key]) | Object Method | Get POST Form-Data type data | 
+| request:get_query(key) | Object Method | Get GET method data |
+| request:get_header(key) | Object Method | Get Header val |
+| request:get_location() | Object Method | Get location  |
+| request:get_method() | Object Method | Get request method, will return enum type METHOD_GET、METHOD_POST、METHOD_OTHER |
 
 #### Response
 
-| 方法 | 类型 | 描述 |
+| Method | Method Type | Description |
 |-----|-----|-----|
-| aidp.http.response() | 静态构造函数 | 构造 response 对象 |
-| response:set_header(key, val) | 对象方法 | 设置响应 header, 如果存在则覆盖原有的 header |
-| response:(key, val) | 对象方法 | 设置响应 header, 如果存在则覆盖原有的 header |
-| response:add_header(key, val) | 对象方法 | 添加响应 header |
-| response:add_header(key, val) | 对象方法 | 添加响应 header |
-| response:set_content(body) | 对象方法 | 设置响应 body | 
-| response:append_content(body) | 对象方法 | 追加响应 body | 
-| response:get_code() | 对象方法 | 获取响应的 HTTP 状态码 |
-| response:set_body_size(size) | 对象方法 | 设置 body 体大小 | 
+| aidp.http.response() | Static | Construct response object |
+| response:set_header(key, val) | Object Method | Set response header, if already exists will cover header |
+| response:add_header(key, val) | Object Method | Add response header |
+| response:set_content(body) | Object Method | Set response body | 
+| response:append_content(body) | Object Method | Append response body | 
+| response:get_code() | Object Method | Get response http code |
+| response:set_body_size(size) | Object Method | Set response body size | 
 
 #### Sample
 
@@ -190,16 +187,16 @@ response:set_content(topic_name .. ':message_size ' .. storage:get(topic_name ..
 
 ### Simple Storage 
 
-存储提供了类似于 Redis 的 key-val 结构的简单的单机存储，辅助实现一些数据缓存存储逻辑
+Storage provides a simple stand-alone storage similar to Redis's key-val structure, helping to implement some data cache storage logic.
 
-如下 Lua Api 在 Http lua 脚本和 Message Consumer 中通用
+The following Lua Api is common in the Http lua script and the Message Consumer valid.
 
-| 方法 | 类型 | 描述 |
+| Method | Method Type | Description |
 |-----|-----|-----|
-| aidp.storage() | 静态构造函数 | 构造 storage 对象 |
-| storage:set(key, val, [ttl]) | 对象方法 | 在存储中设置数据, 如果设置 ttl 则到期后该key 会被回收掉，ttl 单位为秒 |
-| storage:incr(key, step) | 对象方法 | 对某个值累加 step |
-| storage:decr(key, step) | 对象方法 | 对某个值累减 step |
-| storage:get(key) | 对象方法 | 获取数据 |
-| storage:exists(key) | 对象方法 | 判断某个 key 是否存在 |
-| storage:del(key) | 对象方法 |  删除某个 key |
+| aidp.storage() | Static | Construct storage object |
+| storage:set(key, val, [ttl]) | Object Method | Set the data in the storage, if set ttl is expired after the key will be recovered, ttl units is second |
+| storage:incr(key, step) | Object Method | Increment val step |
+| storage:decr(key, step) | Object Method | Decrement val step |
+| storage:get(key) | Object Method | Get value |
+| storage:exists(key) | Object Method | Get whether a key exists |
+| storage:del(key) | Object Method |  Delete a key |
