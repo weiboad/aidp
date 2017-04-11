@@ -18,7 +18,7 @@ Most of the application scenarios for the message queue are back-end with a cons
 
 #### RPM install
 
-RPM 目前支持 centos7.x 版本，其他版本陆续会上传, 有其他系统版本的需求可以提 issue
+RPM currently support centos7.x version, other versions will be uploaded, there are other system version of the demand can add the issue
 
 #### Complie install
 
