@@ -152,6 +152,7 @@ end
 #### Request
 
 | 方法 | 类型 | 描述 |
+|-----|-----|-----|
 | aidp.http.request() | 静态构造函数 | 构造 request 对象 |
 | request:get_uri() | 对象方法 | 获取请求 URI |
 | request:get_remote_address() | 对象方法 | 获取请求远程的 IP 地址 |
@@ -165,6 +166,7 @@ end
 #### Response
 
 | 方法 | 类型 | 描述 |
+|-----|-----|-----|
 | aidp.http.response() | 静态构造函数 | 构造 response 对象 |
 | response:set_header(key, val) | 对象方法 | 设置响应 header, 如果存在则覆盖原有的 header |
 | response:(key, val) | 对象方法 | 设置响应 header, 如果存在则覆盖原有的 header |
@@ -192,6 +194,7 @@ response:set_content(topic_name .. ':message_size ' .. storage:get(topic_name ..
 如下 Lua Api 在 Http lua 脚本和 Message Consumer 中通用
 
 | 方法 | 类型 | 描述 |
+|-----|-----|-----|
 | aidp.storage() | 静态构造函数 | 构造 storage 对象 |
 | storage:set(key, val, [ttl]) | 对象方法 | 在存储中设置数据, 如果设置 ttl 则到期后该key 会被回收掉，ttl 单位为秒 |
 | storage:incr(key, step) | 对象方法 | 对某个值累加 step |
