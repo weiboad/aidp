@@ -6,6 +6,7 @@ AIDP 负责消息队列消费等一系列逻辑，在获取到消息后具体的
 
 AIDP 处理调用流程：
 
+![数据处理流程](docs/images/aidp_struct_pro.png)
 
 ### Why? 
 
