@@ -2,6 +2,8 @@
 
 AIDP 负责消息队列消费等一系列逻辑，在获取到消息后具体的处理交由 Lua 脚本处理，开发者可以定制消费队列的处理，并且本框架提供了 Http Server 服务，可以使用 Lua 脚本定制 Http API 接口，再消费消息逻辑和 Http Server 间本框架提供了简单的 Key-Val 存储结构做数据共享。如图是该数据处理框架的结构：
 
+![结构图](docs/images/aidp_struct.png)
+
 AIDP 处理调用流程：
 
 
