@@ -22,8 +22,8 @@ public:
 
 private:
 	AdbaseConfig* _configure;
-	app::Message* _message = nullptr;
 	std::shared_ptr<app::Storage> _storage;
+	std::shared_ptr<app::Message> _message;
 	mutable std::mutex _mut;
 	void bindLuaMessage();
 };

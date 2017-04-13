@@ -46,7 +46,7 @@ void App::run() {
 	_storage = std::shared_ptr<app::Storage>(new app::Storage(_configure));
 	_storage->init();
 
-	_message = new app::Message(_configure, _storage.get());
+	_message = std::shared_ptr<app::Message>(new app::Message(_configure, _storage.get()));
 	_message->start();
 }
 
@@ -62,11 +62,7 @@ void App::reload() {
 // {{{ void App::stop()
 
 void App::stop() {
-	if (_message != nullptr) {
-		_message->stop();
-		delete _message;
-		_message = nullptr;
-	}
+	_message->stop();
 }
 
 // }}}
@@ -82,7 +78,7 @@ void App::setAdServerContext(AdServerContext* context) {
 
 void App::setAimsContext(AimsContext* context) {
 	context->app = this;
-	context->message = _message;
+	context->message = _message.get();
 	context->storage = _storage.get();
 }
 

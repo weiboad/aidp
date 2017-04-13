@@ -36,6 +36,7 @@ public:
 	void reload();
 	void call(int i);
 	MessageToLua getMessage();
+    int rollback(std::list<std::string> ids);
 	bool push(MessageItem& item);
     static void deleteThread(std::thread *t);
 

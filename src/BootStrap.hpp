@@ -32,7 +32,7 @@ private:
 	adbase::EventLoop* _loop = nullptr;	
 	Aims* _aims = nullptr;
 	Timer* _timer = nullptr;
-	App* _app = nullptr;
+    std::unique_ptr<App> _app;
 
 	void daemonInit();
 	void asyncLogger(const char* msg, int len);

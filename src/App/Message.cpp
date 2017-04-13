@@ -4,7 +4,7 @@
 #include <adbase/Lua.hpp>
 
 namespace app {
-thread_local adbase::lua::Engine* messageLuaEngine = nullptr;
+thread_local std::unique_ptr<adbase::lua::Engine> messageLuaEngine;
 thread_local std::unordered_map<std::string, MessageItem> messageLuaMessages;
 
 // {{{ Message::Message()
@@ -105,9 +105,9 @@ void Message::call(int i) {
 // {{{ void Message::initLua()
 
 void Message::initLua() {
-	messageLuaEngine = new adbase::lua::Engine();
+    std::unique_ptr<adbase::lua::Engine> engine(new adbase::lua::Engine());
+    messageLuaEngine = std::move(engine);
 	messageLuaEngine->init();
-	messageLuaEngine->clearLoaded();
 	messageLuaEngine->addSearchPath(_configure->luaScriptPath, true);
 
 	adbase::lua::BindingClass<app::Message> clazz("message", "aidp", messageLuaEngine->getLuaState());
@@ -115,7 +115,11 @@ void Message::initLua() {
 	GetMessageFn getMessageFn = std::bind(&app::Message::getMessage, this);
 	clazz.addMethod("get", getMessageFn);
 
-	_storage->bindClass(messageLuaEngine);
+	typedef std::function<void (std::list<std::string>)> RollBackMessageFn;
+	RollBackMessageFn rollbackFn = std::bind(&app::Message::rollback, this, std::placeholders::_1);
+	clazz.addMethod("rollback", rollbackFn);
+
+	_storage->bindClass(messageLuaEngine.get());
 }
 
 // }}}
@@ -135,7 +139,7 @@ MessageToLua Message::getMessage() {
 	MessageToLua ret;
 	for	(auto &t : messageLuaMessages) {
 		std::list<std::string> item;
-		std::string id = std::to_string(t.second.partId) + "_" + std::to_string(t.second.offset);
+		std::string id = convertKey(t.second);
 		std::string message = t.second.message.retrieveAllAsString();
 		item.push_back(id);
 		item.push_back(t.second.topicName);
@@ -143,6 +147,22 @@ MessageToLua Message::getMessage() {
 		ret.push_back(item);
 	}
 	return ret;
+}
+
+// }}}
+// {{{ int Message::rollback()
+
+int Message::rollback(std::list<std::string> ids) {
+    int count = 0;
+	for	(auto &t : ids) {
+        if (messageLuaMessages.find(t) != messageLuaMessages.end()) {
+            MessageItem item = messageLuaMessages[t];
+            int processQueueNum = item.partId % _configure->consumerThreadNumber;
+            _queues[processQueueNum]->push(item);
+            count++;
+        }
+	}
+    return count;
 }
 
 // }}}
@@ -165,10 +185,6 @@ bool Message::push(MessageItem& item) {
 
 void Message::deleteThread(std::thread *t) {
 	t->join();
-	if (messageLuaEngine != nullptr) {
-		delete messageLuaEngine;
-		messageLuaEngine = nullptr;
-	}
 	delete t;
 }
 
@@ -183,7 +199,7 @@ void Message::addLuaMessage(MessageItem& item) {
 // {{{ const std::string Message::convertKey()
 
 const std::string Message::convertKey(MessageItem& item) {
-	std::string key = std::to_string(item.partId) + "_" + std::to_string(item.offset);
+	std::string key = std::to_string(item.partId) + "_" + std::to_string(item.offset) + "_" + item.topicName;
 	return key;
 }
 

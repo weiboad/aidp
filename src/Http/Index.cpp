@@ -29,7 +29,6 @@ void Index::index(adbase::http::Request* request, adbase::http::Response* respon
 	if (httpLuaEngine == nullptr) {
 		httpLuaEngine = new adbase::lua::Engine();
 		httpLuaEngine->init();
-		httpLuaEngine->clearLoaded();
 		httpLuaEngine->addSearchPath(_context->config->luaScriptPath, true);
 		bindLuaClass(httpLuaEngine);
 		LOG_INFO << "Http Lua engine init....";

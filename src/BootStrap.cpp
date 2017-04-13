@@ -28,7 +28,8 @@ BootStrap::~BootStrap() {
 
 void BootStrap::init(int argc, char **argv) {
 	_configure = new AdbaseConfig;			
-	_app = new App(_configure);
+    std::unique_ptr<App> tmpApp(new App(_configure));
+    _app = std::move(tmpApp);
 
 	// 解析指定的参数
 	parseOption(argc, argv);
@@ -114,10 +115,8 @@ void BootStrap::stop(const int sig) {
 		delete _timer;
 	}
 	
-	if (_app != nullptr) {
+	if (_app) {
         _app->stop();
-		delete _app;
-		_app = nullptr;
 	}
 
 	if (_loop != nullptr) {

@@ -45,5 +45,7 @@ TARGET_LINK_LIBRARIES(aidp libadbase.a
 	pthread
 	rt
 	dl
+    ssl
+    sasl2
 	)
 INSTALL(TARGETS aidp RUNTIME DESTINATION adinf/aidp/bin)
