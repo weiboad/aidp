@@ -1,6 +1,6 @@
 Summary: Weibo adinf kafka consumer using lua script
 Name: aidp
-Version:0.1.1
+Version:0.1.2
 Release:el6.5
 Group:Development/Tools
 License:BSD
@@ -14,7 +14,7 @@ Prefix:/usr/local/adinf/aidp
 Requires:sudo
 %define debug_packages %{nil}
 %define debug_package %{nil}
-%define _topdir /usr/home/zhongxiu/rpmbuild
+%define _topdir /home/vagrant/rpmbuild
 %description
 -------------------------------------
 - Everything in order to facilitate -

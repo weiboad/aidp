@@ -115,7 +115,7 @@ void Message::initLua() {
 	GetMessageFn getMessageFn = std::bind(&app::Message::getMessage, this);
 	clazz.addMethod("get", getMessageFn);
 
-	typedef std::function<void (std::list<std::string>)> RollBackMessageFn;
+	typedef std::function<int (std::list<std::string>)> RollBackMessageFn;
 	RollBackMessageFn rollbackFn = std::bind(&app::Message::rollback, this, std::placeholders::_1);
 	clazz.addMethod("rollback", rollbackFn);
 
@@ -140,7 +140,8 @@ MessageToLua Message::getMessage() {
 	for	(auto &t : messageLuaMessages) {
 		std::list<std::string> item;
 		std::string id = convertKey(t.second);
-		std::string message = t.second.message.retrieveAllAsString();
+        adbase::Buffer tmp = t.second.message;
+		std::string message = tmp.retrieveAllAsString();
 		item.push_back(id);
 		item.push_back(t.second.topicName);
 		item.push_back(message);

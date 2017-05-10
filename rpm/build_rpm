@@ -11,9 +11,9 @@ CUR_PWD=`pwd`
 PATH_DEV_SWAN=/usr/local/adinf/aidp
 
 # build rpm 包的目录
-BUILD_ROOT="/usr/home/zhongxiu/rpmbuild"
+BUILD_ROOT="/home/vagrant/rpmbuild"
 SWANSOFT_NAME="aidp"
-SWANSOFT_VERSION="0.1.1"
+SWANSOFT_VERSION="0.1.2"
 BUILD_TMP=/tmp
 BUILD_BALL=$BUILD_TMP/$SWANSOFT_NAME-$SWANSOFT_VERSION
 
