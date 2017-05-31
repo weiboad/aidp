@@ -1,5 +1,6 @@
 #include "Index.hpp"
 #include "App/Storage.hpp"
+#include "App/Metrics.hpp"
 #include <adbase/Logging.hpp>
 
 namespace adserver {
@@ -93,12 +94,15 @@ void Index::bindLuaClass(adbase::lua::Engine* engine) {
 
 	response.addMethod("set_header", &adbase::http::Response::setHeader);
 	response.addMethod("add_header", &adbase::http::Response::addHeader);
-	response.addMethod("set_content", &adbase::http::Response::setContent);
-	response.addMethod("append_content", &adbase::http::Response::appendContent);
+    response.addMethod<void, adbase::http::Response, const char*, size_t>("set_content", &adbase::http::Response::setContent);
+    response.addMethod<void, adbase::http::Response, const std::string&>("set_content", &adbase::http::Response::setContent);
+    response.addMethod<void, adbase::http::Response, const char*, size_t, bool>("append_content", &adbase::http::Response::appendContent);
+    response.addMethod<void, adbase::http::Response, const std::string&, bool>("append_content", &adbase::http::Response::appendContent);
 	response.addMethod("send_reply", &adbase::http::Response::sendReply);
 	response.addMethod("get_code", &adbase::http::Response::getCode);
 	response.addMethod("set_body_size", &adbase::http::Response::getBodySize);
 	_context->storage->bindClass(engine);
+	_context->appMetrics->bindClass(engine);
 }
 
 // }}}

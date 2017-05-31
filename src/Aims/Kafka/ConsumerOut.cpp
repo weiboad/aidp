@@ -33,9 +33,8 @@ bool ConsumerOut::pull(const std::string& topicName, int partId, uint64_t offset
 // }}}
 // {{{ void ConsumerOut::stat()
 
-void ConsumerOut::stat(adbase::kafka::Consumer* consumer, const std::string& stats) {
+void ConsumerOut::stat(adbase::kafka::ConsumerBatch*, const std::string& stats) {
     LOG_INFO << "Stats:" << stats.substr(0, 1024);
-    LOG_INFO << consumer->getTopicName();
 }
 
 // }}}

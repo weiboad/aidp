@@ -12,7 +12,7 @@ public:
 	ConsumerOut(AimsContext* context);
 	~ConsumerOut();
 	bool pull(const std::string& topicName, int partId, uint64_t offset, const adbase::Buffer& data);
-	void stat(adbase::kafka::Consumer* consumer, const std::string& stats);
+	void stat(adbase::kafka::ConsumerBatch* consumer, const std::string& stats);
 private:
 	AimsContext* _context;
 };

@@ -14,6 +14,7 @@
 
 namespace app {
 class Storage;
+class Metrics;
 // message queue
 typedef struct MessageItem {
     int partId;
@@ -29,7 +30,7 @@ typedef std::list<std::list<std::string>> MessageToLua;
 
 class Message {
 public:
-	Message(AdbaseConfig* configure, Storage* storage);
+	Message(AdbaseConfig* configure, Storage* storage, Metrics* metrics);
 	~Message();
 	void start();
 	void stop();
@@ -47,6 +48,7 @@ private:
 
 	AdbaseConfig *_configure;
 	Storage* _storage;
+	Metrics* _metrics;
 	std::unordered_map<int, MessageQueue*> _queues;
 
 	void callMessage();

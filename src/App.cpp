@@ -5,25 +5,16 @@
 
 //{{{ macros
 
-#define LOAD_KAFKA_CONSUMER_CONFIG(name, sectionName) do {\
-    _configure->isNewConsumer##name = config.getOptionBool("kafkac_"#sectionName, "isNewConsumer"#name);\
-    _configure->topicNameConsumer##name    = config.getOption("kafkac_"#sectionName, "topicName"#name);\
-    _configure->groupId##name      = config.getOption("kafkac_"#sectionName, "groupId"#name);\
-    _configure->brokerListConsumer##name   = config.getOption("kafkac_"#sectionName, "brokerList"#name);\
-    _configure->kafkaDebug##name   = config.getOption("kafkac_"#sectionName, "kafkaDebug"#name);\
-    _configure->offsetPath##name   = config.getOption("kafkac_"#sectionName, "offsetPath"#name);\
-    _configure->statInterval##name = config.getOption("kafkac_"#sectionName, "statInterval"#name);\
-} while(0)
-
-#define LOAD_KAFKA_PRODUCER_CONFIG(name, sectionName) do {\
-    _configure->topicNameProducer##name    = config.getOption("kafkap_"#sectionName, "topicName"#name);\
-    _configure->brokerListProducer##name   = config.getOption("kafkap_"#sectionName, "brokerList"#name);\
-    _configure->debug##name        = config.getOption("kafkap_"#sectionName, "debug"#name);\
-    _configure->queueLength##name  = config.getOptionUint32("kafkap_"#sectionName, "queueLength"#name);\
-} while(0)
-
 #define LOAD_TIMER_CONFIG(name) do {\
 	_configure->interval##name = config.getOptionUint32("timer", "interval"#name);\
+} while(0)
+
+#define LOAD_KAFKA_CONSUMER_CONFIG(name, sectionName) do {\
+        _configure->topicNameConsumer##name    = config.getOption("kafkac_"#sectionName, "topicName"#name);\
+        _configure->groupId##name      = config.getOption("kafkac_"#sectionName, "groupId"#name);\
+        _configure->brokerListConsumer##name   = config.getOption("kafkac_"#sectionName, "brokerList"#name);\
+        _configure->kafkaDebug##name   = config.getOption("kafkac_"#sectionName, "kafkaDebug"#name);\
+        _configure->statInterval##name = config.getOption("kafkac_"#sectionName, "statInterval"#name);\
 } while(0)
 
 //}}}
@@ -46,7 +37,9 @@ void App::run() {
 	_storage = std::shared_ptr<app::Storage>(new app::Storage(_configure));
 	_storage->init();
 
-	_message = std::shared_ptr<app::Message>(new app::Message(_configure, _storage.get()));
+	_metrics = std::shared_ptr<app::Metrics>(new app::Metrics());
+
+	_message = std::shared_ptr<app::Message>(new app::Message(_configure, _storage.get(), _metrics.get()));
 	_message->start();
 }
 
@@ -71,6 +64,7 @@ void App::stop() {
 void App::setAdServerContext(AdServerContext* context) {
 	context->app = this;
 	context->storage = _storage.get();
+	context->appMetrics = _metrics.get();
 }
 
 // }}}
@@ -80,6 +74,7 @@ void App::setAimsContext(AimsContext* context) {
 	context->app = this;
 	context->message = _message.get();
 	context->storage = _storage.get();
+	context->appMetrics = _metrics.get();
 }
 
 // }}}
@@ -88,14 +83,13 @@ void App::setAimsContext(AimsContext* context) {
 void App::setTimerContext(TimerContext* context) {
 	context->app = this;
 	context->storage = _storage.get();
+	context->appMetrics = _metrics.get();
 }
 
 // }}}
 //{{{ void App::loadConfig()
 
 void App::loadConfig(adbase::IniConfig& config) {
-	LOAD_KAFKA_CONSUMER_CONFIG(Out, out);
-
     _configure->luaDebug = config.getOptionBool("lua", "debug");
     _configure->luaScriptPath = config.getOption("lua", "scriptPath");
     _configure->consumerScriptName  = config.getOption("consumer", "scriptName");
@@ -105,6 +99,7 @@ void App::loadConfig(adbase::IniConfig& config) {
     _configure->messageSwp = config.getOption("consumer", "messageSwp");
     _configure->httpScriptName  = config.getOption("http", "scriptName");
 	
+    LOAD_KAFKA_CONSUMER_CONFIG(Out, out);
 	LOAD_TIMER_CONFIG(ClearStorage);
 }
 

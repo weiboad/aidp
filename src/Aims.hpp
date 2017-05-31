@@ -12,6 +12,7 @@ public:
 	Aims(AimsContext* context);
 	~Aims();
 	void run();
+	void reload();
 
 private:
 	/// 传输上下文指针
@@ -22,7 +23,7 @@ private:
 	void stop();
 	void initKafkaConsumer();
 	aims::kafka::ConsumerOut* _kafkaConsumerCallbackOut = nullptr;
-	std::unordered_map<std::string, adbase::kafka::Consumer*> _kafkas;
+    adbase::kafka::ConsumerBatch* _kafka;
 
 };
 

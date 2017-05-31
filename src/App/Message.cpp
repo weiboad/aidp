@@ -1,5 +1,6 @@
 #include "Message.hpp"
 #include "Storage.hpp"
+#include "Metrics.hpp"
 #include <fstream>
 #include <adbase/Lua.hpp>
 
@@ -9,7 +10,9 @@ thread_local std::unordered_map<std::string, MessageItem> messageLuaMessages;
 
 // {{{ Message::Message()
 
-Message::Message(AdbaseConfig* configure, Storage* storage): _configure(configure), _storage(storage) {
+Message::Message(AdbaseConfig* configure, Storage* storage, Metrics* metrics): _configure(configure), 
+    _storage(storage),
+    _metrics(metrics) {
 }
 
 // }}}
@@ -120,6 +123,7 @@ void Message::initLua() {
 	clazz.addMethod("rollback", rollbackFn);
 
 	_storage->bindClass(messageLuaEngine.get());
+	_metrics->bindClass(messageLuaEngine.get());
 }
 
 // }}}

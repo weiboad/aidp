@@ -14,9 +14,7 @@
 	std::string groupId##name;\
 	std::string brokerListConsumer##name;\
 	std::string kafkaDebug##name;\
-	std::string offsetPath##name;\
-	std::string statInterval##name;\
-	bool isNewConsumer##name;
+	std::string statInterval##name;
 #endif
 #ifndef DECLARE_KAFKA_PRODUCER_CONFIG
 #define DECLARE_KAFKA_PRODUCER_CONFIG(name) \
@@ -85,6 +83,7 @@ class App;
 namespace app {
 	class Message;
 	class Storage;
+	class Metrics;
 }
 typedef struct adserverContext {
 	AdbaseConfig* config;
@@ -93,6 +92,7 @@ typedef struct adserverContext {
 	adbase::metrics::Metrics* metrics;
 	// 前后端交互数据指针添加到下面
 	app::Storage* storage;
+	app::Metrics* appMetrics;
 } AdServerContext;
 
 typedef struct aimsContext {
@@ -101,6 +101,7 @@ typedef struct aimsContext {
 	// 消息队列交互上下文
 	app::Message* message;
 	app::Storage* storage;
+	app::Metrics* appMetrics;
 } AimsContext;
 typedef struct timerContext {
 	AdbaseConfig* config;
@@ -108,6 +109,7 @@ typedef struct timerContext {
 	App* app;
 	// 定时器交互上下文
 	app::Storage* storage;
+	app::Metrics* appMetrics;
 } TimerContext;
 
 #endif

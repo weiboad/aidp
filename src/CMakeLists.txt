@@ -34,18 +34,20 @@ SET(AIDP_SRC aidp.cpp
 	Timer.cpp
 	App/Message.cpp
 	App/Storage.cpp
+    App/Metrics.cpp
 )
 ADD_EXECUTABLE(aidp ${AIDP_SRC})
 TARGET_LINK_LIBRARIES(aidp libadbase.a 
 	libadbase_kafka.a
 	libadbase_lua.a
+    librdkafka++.a
 	librdkafka.a 
 	libevent.a
 	liblua.a
 	pthread
 	rt
-	dl
-    ssl
-    sasl2
+    lz4
+    z
+    dl
 	)
 INSTALL(TARGETS aidp RUNTIME DESTINATION adinf/aidp/bin)

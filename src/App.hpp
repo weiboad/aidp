@@ -6,6 +6,7 @@
 #include "AdbaseConfig.hpp"
 #include "App/Message.hpp"
 #include "App/Storage.hpp"
+#include "App/Metrics.hpp"
 
 class App {
 public:
@@ -24,6 +25,7 @@ private:
 	AdbaseConfig* _configure;
 	std::shared_ptr<app::Storage> _storage;
 	std::shared_ptr<app::Message> _message;
+	std::shared_ptr<app::Metrics> _metrics;
 	mutable std::mutex _mut;
 	void bindLuaMessage();
 };

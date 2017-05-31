@@ -94,6 +94,9 @@ void BootStrap::reload() {
 	}
 	setLoggerLevel();
 	_app->reload();
+    if (_aims != nullptr) {
+        _aims->reload();
+    }
 }
 
 // }}}
