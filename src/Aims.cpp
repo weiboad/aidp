@@ -11,7 +11,6 @@ Aims::Aims(AimsContext* context) :
 // {{{ Aims::~Aims()
 
 Aims::~Aims() {
-	stop();
 }
 
 // }}}
@@ -21,6 +20,7 @@ void Aims::run() {
 	// 初始化 server
 	init();
     _kafka->start();
+    _state = RUNNING;
 }
 
 // }}}
@@ -50,6 +50,26 @@ void Aims::stop() {
 		delete _kafkaConsumerCallbackOut;
 		_kafkaConsumerCallbackOut = nullptr;
 	}
+}
+
+// }}}
+// {{{ void Aims::pause()
+
+void Aims::pause() {
+    if (_state == RUNNING) {
+        _kafka->pause();
+        _state = PAUSE;
+    }
+}
+
+// }}}
+// {{{ void Aims::resume()
+
+void Aims::resume() {
+    if (_state == PAUSE) {
+        _kafka->resume();
+        _state = RUNNING;
+    }
 }
 
 // }}}

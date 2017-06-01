@@ -24,14 +24,14 @@ public:
 	AdbaseConfig* getConfig();
 
 private:
-	AdbaseConfig* _configure;
+    std::shared_ptr<AdbaseConfig> _configure;
 	mutable std::mutex _mut;
-	adbase::AsyncLogging* _asnclog = nullptr;
+    std::shared_ptr<adbase::AsyncLogging> _asnclog;
 	std::string _configFile;
-	AdServer* _adServer = nullptr;	
-	adbase::EventLoop* _loop = nullptr;	
-	Aims* _aims = nullptr;
-	Timer* _timer = nullptr;
+    std::shared_ptr<AdServer> _adServer;
+    std::shared_ptr<adbase::EventLoop> _loop;
+    std::shared_ptr<Aims> _aims;
+    std::shared_ptr<Timer> _timer;
     std::unique_ptr<App> _app;
 
 	void daemonInit();

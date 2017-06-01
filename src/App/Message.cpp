@@ -12,7 +12,8 @@ thread_local std::unordered_map<std::string, MessageItem> messageLuaMessages;
 
 Message::Message(AdbaseConfig* configure, Storage* storage, Metrics* metrics): _configure(configure), 
     _storage(storage),
-    _metrics(metrics) {
+    _metrics(metrics),
+    _isRunning(false) {
 }
 
 // }}}
@@ -31,16 +32,22 @@ Message::~Message() {
 // {{{ void Message::start()
 
 void Message::start() {
+    _threadNumber = _configure->consumerThreadNumber;
+    _isRunning = true;
+    _luaProcessTimer = adbase::metrics::Metrics::buildTimers("message", "process", 60000);
 	for (int i = 0; i < _configure->consumerThreadNumber; i++) {
 		_queues[i] = new MessageQueue;	
 		std::string key = "queue" + std::to_string(i) + ".size";
-		adbase::metrics::Metrics::buildGauges("message", key, 1, [this, i](){
+		adbase::metrics::Metrics::buildGauges("message", key, 1000, [this, i](){
 				return _queues[i]->getSize();
 		});
 		ThreadPtr callThread(new std::thread(std::bind(&Message::call, this, std::placeholders::_1), i), &Message::deleteThread);
 		LOG_DEBUG << "Create call lua thread success";
 		Threads.push_back(std::move(callThread));
 	}
+    std::string messageName = _configure->messageDir + "/message_error";
+    _logger = std::shared_ptr<adbase::AsyncLogging>(new adbase::AsyncLogging(messageName, _configure->messageRollSize));
+    _logger->start();
 
 }
 
@@ -53,8 +60,12 @@ void Message::stop() {
 		newItem.mask = 0x01;
 		newItem.partId = 0;
 		newItem.offset = 0;
+		newItem.tryNum = 0;
 		t.second->push(newItem);
 	}
+    _isRunning = false;
+    std::unique_lock<std::mutex> lk(_mut);
+    _dataCond.wait(lk, [this]{return (_threadNumber == 0);});
 }
 
 // }}}
@@ -69,9 +80,13 @@ void Message::reload() {
 void Message::call(int i) {
 	// 初始化 lua 引擎
 	initLua();
+    std::string key = "lua.message.map" + std::to_string(i) + ".size";
+    adbase::metrics::Metrics::buildGauges("message", key, 1000, [this, i](){
+        return messageLuaMessages.size();
+    });
 
 	int batchNum = _configure->consumerBatchNumber;
-	while(true) {
+	while(_isRunning) {
 		MessageItem item;
 		_queues[i]->waitPop(item);
 		if (item.mask == 0x01) {
@@ -94,7 +109,8 @@ void Message::call(int i) {
 					break;
 				}
 				addLuaMessage(itemBatch);
-			} while(batchNum--);
+                batchNum--;
+			} while(batchNum > 0);
 
 			if (exit) {
 				break;
@@ -102,6 +118,23 @@ void Message::call(int i) {
 		}
 		callMessage();
 	}
+
+    for (auto &t : messageLuaMessages) {
+        saveMessage(t.second);
+    }
+
+    while(_queues[i]->getSize()) {
+        MessageItem item;
+		bool ret = _queues[i]->tryPop(item);
+        if (!ret) {
+            break;
+        }
+        saveMessage(item);
+    }
+
+    std::unique_lock<std::mutex> lk(_mut);
+    _threadNumber--;
+    _dataCond.notify_all();
 }
 
 // }}}
@@ -130,10 +163,19 @@ void Message::initLua() {
 // {{{ void Message::callMessage()
 
 void Message::callMessage() {
+    adbase::metrics::Timer timer;
+    timer.start();
 	bool isCall = messageLuaEngine->runFile(_configure->consumerScriptName.c_str());
-	if (isCall) {
-		messageLuaMessages.clear();
-	}
+	if (!isCall) {
+        for (auto &t : messageLuaMessages) { 
+            saveMessage(t.second);
+        }
+    }
+	messageLuaMessages.clear();
+    double time = timer.stop();
+    if (_luaProcessTimer != nullptr) {
+        _luaProcessTimer->setTimer(time);
+    }
 }
 
 // }}}
@@ -162,8 +204,7 @@ int Message::rollback(std::list<std::string> ids) {
 	for	(auto &t : ids) {
         if (messageLuaMessages.find(t) != messageLuaMessages.end()) {
             MessageItem item = messageLuaMessages[t];
-            int processQueueNum = item.partId % _configure->consumerThreadNumber;
-            _queues[processQueueNum]->push(item);
+            saveMessage(item);
             count++;
         }
 	}
@@ -179,10 +220,20 @@ bool Message::push(MessageItem& item) {
 		_queues[processQueueNum]->push(item);
 	}
 
-	if (static_cast<int>(_queues[processQueueNum]->getSize()) > _configure->consumerMaxNumber) {
-		return false;
-	}
 	return true;
+}
+
+// }}}
+// {{{ bool Message::queueCheck()
+
+bool Message::queueCheck() {
+	for(auto &t : _queues) {
+        if (static_cast<int>(t.second->getSize()) > _configure->consumerMaxNumber) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 // }}}
@@ -206,6 +257,45 @@ void Message::addLuaMessage(MessageItem& item) {
 const std::string Message::convertKey(MessageItem& item) {
 	std::string key = std::to_string(item.partId) + "_" + std::to_string(item.offset) + "_" + item.topicName;
 	return key;
+}
+
+// }}}
+// {{{ void Message::serialize()
+
+void Message::serialize(adbase::Buffer& buffer, MessageItem& item) {
+    buffer.appendInt32(item.partId);
+    buffer.appendInt32(item.tryNum);
+    buffer.appendInt32(static_cast<uint32_t>(item.topicName.size()));
+    buffer.append(item.topicName);
+
+    size_t messageSize = item.message.readableBytes();
+    buffer.appendInt32(static_cast<uint32_t>(messageSize));
+    buffer.append(item.message.peek(), messageSize);
+}
+
+// }}}
+// {{{ void Message::saveMessage()
+
+void Message::saveMessage(MessageItem& item) {
+    if (item.tryNum < _configure->consumerTryNumber) {
+        int processQueueNum = item.partId % _configure->consumerThreadNumber;
+        item.tryNum = item.tryNum + 1;
+        _queues[processQueueNum]->push(item);
+    } else {
+        adbase::Buffer buffer;
+        serialize(buffer, item);
+        if (_logger) {
+            _logger->append(buffer.peek(), static_cast<int>(buffer.readableBytes()));
+        }
+        if (_errorMessageCounters.find(item.topicName) == _errorMessageCounters.end()) {
+            std::string metricName = "error." + item.topicName;
+            _errorMessageCounters[item.topicName] = adbase::metrics::Metrics::buildCounter("message", metricName);
+        }
+
+        if (_errorMessageCounters[item.topicName] != nullptr) {
+            _errorMessageCounters[item.topicName]->add(1);
+        }
+    }
 }
 
 // }}}

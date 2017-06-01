@@ -24,6 +24,7 @@ bool ConsumerOut::pull(const std::string& topicName, int partId, uint64_t offset
 	item.offset = offset;
 	item.message = data;
 	item.topicName = topicName;
+	item.tryNum = 0;
     if (_context->message != nullptr) {
 	    return _context->message->push(item);
     }

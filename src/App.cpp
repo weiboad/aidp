@@ -59,6 +59,21 @@ void App::stop() {
 }
 
 // }}}
+// {{{ void App::checkQueue()
+
+void App::checkQueue() {
+    if (!_message->queueCheck()) {
+        if (_aims) {
+            _aims->pause(); 
+        }      
+    } else {
+        if (_aims) {
+            _aims->resume(); 
+        }
+    }
+}
+
+// }}}
 // {{{ void App::setAdServerContext()
 
 void App::setAdServerContext(AdServerContext* context) {
@@ -87,6 +102,13 @@ void App::setTimerContext(TimerContext* context) {
 }
 
 // }}}
+// {{{ void App::setAims()
+
+void App::setAims(std::shared_ptr<Aims>& aims) {
+    _aims = aims;
+}
+
+// }}}
 //{{{ void App::loadConfig()
 
 void App::loadConfig(adbase::IniConfig& config) {
@@ -96,7 +118,9 @@ void App::loadConfig(adbase::IniConfig& config) {
     _configure->consumerBatchNumber = config.getOptionUint32("consumer", "batchNumber");
     _configure->consumerThreadNumber = config.getOptionUint32("consumer", "threadNumber");
     _configure->consumerMaxNumber = config.getOptionUint32("consumer", "maxNumber");
-    _configure->messageSwp = config.getOption("consumer", "messageSwp");
+    _configure->consumerTryNumber = config.getOptionUint32("consumer", "tryNumber");
+    _configure->messageDir = config.getOption("consumer", "messageDir");
+    _configure->messageRollSize = config.getOptionUint32("consumer", "messageRollSize");
     _configure->httpScriptName  = config.getOption("http", "scriptName");
 	
     LOAD_KAFKA_CONSUMER_CONFIG(Out, out);

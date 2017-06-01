@@ -49,6 +49,7 @@ void Timer::init() {
 	/// 一段时间后仅执行一次
 	//ADD_AFTER_TIMER(1 * 1000, one);
 	ADD_EVERY_TIMER(_configure->intervalClearStorage, clearStorage);
+	ADD_EVERY_TIMER(10000, checkMessageQueue);
 }
 
 // }}}
@@ -57,6 +58,15 @@ void Timer::init() {
 void Timer::clearStorage(void*) {
 	if (_context->storage != nullptr) {
 		_context->storage->clear();
+	}
+}
+
+// }}}
+// {{{ void Timer::checkMessageQueue()
+
+void Timer::checkMessageQueue(void*) {
+	if (_context->app != nullptr) {
+		_context->app->checkQueue();
 	}
 }
 

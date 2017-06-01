@@ -76,7 +76,9 @@ typedef struct adbaseConfig {
 	int consumerBatchNumber;
 	int consumerThreadNumber;
 	int consumerMaxNumber;
-	std::string messageSwp;
+    int consumerTryNumber;
+    int messageRollSize;
+	std::string messageDir;
 } AdbaseConfig;
 
 class App;

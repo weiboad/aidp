@@ -13,6 +13,7 @@ public:
 	void init();
 	adbase::Timer* getTimer();
 	void clearStorage(void* args);
+	void checkMessageQueue(void* args);
 
 private:
 	/// 传输上下文指针

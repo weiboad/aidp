@@ -6,6 +6,7 @@
 #include <adbase/Lua.hpp>
 #include <adbase/Metrics.hpp>
 #include <unordered_map>
+#include <condition_variable>
 #include <mutex>
 #include <thread>
 #include <list>
@@ -20,6 +21,7 @@ typedef struct MessageItem {
     int partId;
 	int mask; // 0x00 normal, 0x01 stop
     uint64_t offset;
+    int tryNum;
 	std::string topicName;
     adbase::Buffer message;
 } MessageItem;
@@ -39,23 +41,32 @@ public:
 	MessageToLua getMessage();
     int rollback(std::list<std::string> ids);
 	bool push(MessageItem& item);
+    bool queueCheck();
     static void deleteThread(std::thread *t);
 
 private:
+    mutable std::mutex _mut;
+    std::condition_variable _dataCond;
 	typedef std::unique_ptr<std::thread, decltype(&Message::deleteThread)> ThreadPtr;
     typedef std::vector<ThreadPtr> ThreadPool;
     ThreadPool Threads;
+    int _threadNumber;
 
 	AdbaseConfig *_configure;
 	Storage* _storage;
 	Metrics* _metrics;
+    bool _isRunning;
 	std::unordered_map<int, MessageQueue*> _queues;
+    std::shared_ptr<adbase::AsyncLogging> _logger;
+    std::unordered_map<std::string, adbase::metrics::Counter*> _errorMessageCounters;
+    adbase::metrics::Timers* _luaProcessTimer;
 
 	void callMessage();
 	void initLua();
 	void addLuaMessage(MessageItem& item);
 	const std::string convertKey(MessageItem& item);
-
+    void serialize(adbase::Buffer& buffer, MessageItem& item);
+    void saveMessage(MessageItem& item);
 };
 }
 #endif
