@@ -46,7 +46,6 @@ TARGET_LINK_LIBRARIES(aidp libadbase.a
 	liblua.a
 	pthread
 	rt
-    lz4
     z
     dl
 	)

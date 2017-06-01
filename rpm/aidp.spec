@@ -1,7 +1,7 @@
 Summary: Weibo adinf kafka consumer using lua script
 Name: aidp
-Version:0.1.3
-Release:el6.5
+Version:0.1.4
+Release:el7.3
 Group:Development/Tools
 License:BSD
 URL: http://adinf.weiboad.org
