@@ -14,6 +14,7 @@ public:
 	adbase::Timer* getTimer();
 	void clearStorage(void* args);
 	void checkMessageQueue(void* args);
+	void mallocTrim(void* args);
 
 private:
 	/// 传输上下文指针

@@ -50,6 +50,7 @@ void Timer::init() {
 	//ADD_AFTER_TIMER(1 * 1000, one);
 	ADD_EVERY_TIMER(_configure->intervalClearStorage, clearStorage);
 	ADD_EVERY_TIMER(10000, checkMessageQueue);
+	ADD_EVERY_TIMER(_configure->mallocTrimInterval, mallocTrim);
 }
 
 // }}}
@@ -68,6 +69,13 @@ void Timer::checkMessageQueue(void*) {
 	if (_context->app != nullptr) {
 		_context->app->checkQueue();
 	}
+}
+
+// }}}
+// {{{ void Timer::mallocTrim()
+
+void Timer::mallocTrim(void*) {
+    adbase::mallocTrim(_configure->mallocTrimPad);
 }
 
 // }}}

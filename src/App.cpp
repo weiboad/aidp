@@ -112,6 +112,8 @@ void App::setAims(std::shared_ptr<Aims>& aims) {
 //{{{ void App::loadConfig()
 
 void App::loadConfig(adbase::IniConfig& config) {
+    _configure->mallocTrimInterval = config.getOptionUint32("system", "mallocTrimInterval");
+    _configure->mallocTrimPad = config.getOptionUint32("system", "mallocTrimPad");
     _configure->luaDebug = config.getOptionBool("lua", "debug");
     _configure->luaScriptPath = config.getOption("lua", "scriptPath");
     _configure->consumerScriptName  = config.getOption("consumer", "scriptName");
