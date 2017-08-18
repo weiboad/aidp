@@ -1,10 +1,10 @@
 /// 该程序自动生成，禁止修改
 #ifndef AIDP_VERSION_HPP_
 #define AIDP_VERSION_HPP_
-#define VERSION "0.1.4"
-#define SOVERSION ""
-#define GIT_DIRTY "41"
-#define GIT_SHA1 "539ab05f"
-#define BUILD_ID "localhost.localdomain-1496284153"
+#define VERSION "1.0.0"
+#define SOVERSION "1"
+#define GIT_DIRTY "758"
+#define GIT_SHA1 "a3a4ad7c"
+#define BUILD_ID "bpdev-1503035195"
 #define BUILD_TYPE "Release"
 #endif

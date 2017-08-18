@@ -58,7 +58,7 @@ private:
     bool _isRunning;
 	std::unordered_map<int, MessageQueue*> _queues;
     std::shared_ptr<adbase::AsyncLogging> _logger;
-    std::unordered_map<std::string, adbase::metrics::Counter*> _errorMessageCounters;
+    std::unordered_map<std::string, adbase::metrics::Meters*> _errorMessageMeter;
     adbase::metrics::Timers* _luaProcessTimer;
 
 	void callMessage();

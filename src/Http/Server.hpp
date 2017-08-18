@@ -14,6 +14,7 @@ public:
 
 private:
     const std::string formatMetric(std::string key, uint64_t value, std::unordered_map<std::string, std::string> tags);
+    const std::string getKey(const std::string& moduleName, const std::string& metricName);
     uint64_t toUint64(std::string value);
     uint64_t toUint64(double value);
 };

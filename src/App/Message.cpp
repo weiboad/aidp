@@ -37,8 +37,9 @@ void Message::start() {
     _luaProcessTimer = adbase::metrics::Metrics::buildTimers("message", "process", 60000);
 	for (int i = 0; i < _configure->consumerThreadNumber; i++) {
 		_queues[i] = new MessageQueue;	
-		std::string key = "queue" + std::to_string(i) + ".size";
-		adbase::metrics::Metrics::buildGauges("message", key, 1000, [this, i](){
+        std::unordered_map<std::string, std::string> tags;
+        tags["queue_id"] = std::to_string(i);
+		adbase::metrics::Metrics::buildGaugesWithTag("message", "queue.size", tags, 1000, [this, i](){
 				return _queues[i]->getSize();
 		});
 		ThreadPtr callThread(new std::thread(std::bind(&Message::call, this, std::placeholders::_1), i), &Message::deleteThread);
@@ -80,8 +81,9 @@ void Message::reload() {
 void Message::call(int i) {
 	// 初始化 lua 引擎
 	initLua();
-    std::string key = "lua.message.map" + std::to_string(i) + ".size";
-    adbase::metrics::Metrics::buildGauges("message", key, 1000, [this, i](){
+    std::unordered_map<std::string, std::string> tags;
+    tags["map_id"] = std::to_string(i);
+    adbase::metrics::Metrics::buildGaugesWithTag("message", "lua.message.map", tags, 1000, [this, i](){
         return messageLuaMessages.size();
     });
 
@@ -287,13 +289,14 @@ void Message::saveMessage(MessageItem& item) {
         if (_logger) {
             _logger->append(buffer.peek(), static_cast<int>(buffer.readableBytes()));
         }
-        if (_errorMessageCounters.find(item.topicName) == _errorMessageCounters.end()) {
-            std::string metricName = "error." + item.topicName;
-            _errorMessageCounters[item.topicName] = adbase::metrics::Metrics::buildCounter("message", metricName);
+        if (_errorMessageMeter.find(item.topicName) == _errorMessageMeter.end()) {
+            std::unordered_map<std::string, std::string> tags;
+            tags["topic_name"] = item.topicName;
+            _errorMessageMeter[item.topicName] = adbase::metrics::Metrics::buildMetersWithTag("message", "error", tags);
         }
 
-        if (_errorMessageCounters[item.topicName] != nullptr) {
-            _errorMessageCounters[item.topicName]->add(1);
+        if (_errorMessageMeter[item.topicName] != nullptr) {
+            _errorMessageMeter[item.topicName]->mark();
         }
     }
 }
