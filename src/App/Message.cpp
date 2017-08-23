@@ -7,6 +7,7 @@
 namespace app {
 thread_local std::unique_ptr<adbase::lua::Engine> messageLuaEngine;
 thread_local std::unordered_map<std::string, MessageItem> messageLuaMessages;
+thread_local size_t messageLuaMessagesSize;
 
 // {{{ Message::Message()
 
@@ -84,7 +85,7 @@ void Message::call(int i) {
     std::unordered_map<std::string, std::string> tags;
     tags["map_id"] = std::to_string(i);
     adbase::metrics::Metrics::buildGaugesWithTag("message", "lua.message.map", tags, 1000, [this, i](){
-        return messageLuaMessages.size();
+        return messageLuaMessagesSize;
     });
 
 	int batchNum = _configure->consumerBatchNumber;
@@ -174,6 +175,7 @@ void Message::callMessage() {
         }
     }
 	messageLuaMessages.clear();
+    messageLuaMessagesSize = messageLuaMessages.size();
     double time = timer.stop();
     if (_luaProcessTimer != nullptr) {
         _luaProcessTimer->setTimer(time);
@@ -210,6 +212,7 @@ int Message::rollback(std::list<std::string> ids) {
             count++;
         }
 	}
+    messageLuaMessagesSize = messageLuaMessages.size();
     return count;
 }
 
@@ -251,6 +254,7 @@ void Message::deleteThread(std::thread *t) {
 
 void Message::addLuaMessage(MessageItem& item) {
 	messageLuaMessages[convertKey(item)] = item;
+    messageLuaMessagesSize = messageLuaMessages.size();
 }
 
 // }}}
